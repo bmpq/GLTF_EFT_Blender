@@ -1,34 +1,42 @@
 import bpy
 
-def disable_decal_shadows():
-    processed_objects = set()
+import bpy
+
+def _disable_shadows_for_object(obj, reason):
+    if not (obj.visible_shadow or obj.visible_diffuse):
+        return
+
+    print(
+        f"Disabling shadow and indirect contribution for '{obj.name}' "
+        f"({reason})."
+    )
+    obj.visible_shadow = False
+    obj.visible_diffuse = False
+
+
+def disable_shadows_by_material_property(prop_name="disabledShadow"):
     for obj in bpy.data.objects:
-        if obj in processed_objects or obj.type != 'MESH':
+        if not obj.material_slots:
             continue
 
-        if obj.material_slots:
-            for slot in obj.material_slots:
-                if slot.material:
-                    mat = slot.material
-                    
-                    if "disabledShadow" in mat:
-                        print(f"Found material '{mat.name}' on object '{obj.name}'. Disabling shadow for this object.")
-                    
-                        obj.visible_shadow = False
-                        obj.visible_diffuse = False
-                        processed_objects.add(obj)
-                        break 
+        matching_material = next(
+            (
+                slot.material for slot in obj.material_slots
+                if slot.material and prop_name in slot.material
+            ),
+            None
+        )
 
-    print("shadows on decals disabled!")
+        if matching_material:
+            reason = f"material: {matching_material.name}"
+            _disable_shadows_for_object(obj, reason)
 
 
-def disable_decal_shadows_by_name():
+def disable_shadows_by_object_name(name_substring="PaintCrack"):
     for obj in bpy.context.scene.objects:
-        if "PaintCrack" in obj.name:
-            obj.visible_shadow = False
-            obj.visible_diffuse = False
-
-            print(f"Disabled shadows for object: {obj.name}")
+        if name_substring in obj.name:
+            reason = f"name contains '{name_substring}'"
+            _disable_shadows_for_object(obj, reason)
 
 
 import re
@@ -75,7 +83,7 @@ def multiply_light_intensity(value):
     for obj in bpy.context.scene.objects:
         if obj.type == 'LIGHT':
             obj.data.energy *= value
-            
+
 
 
 def modify_emission_strength(material, factor):
@@ -83,7 +91,7 @@ def modify_emission_strength(material, factor):
         modified = False
         # Get the material's node tree
         nodes = material.node_tree.nodes
-        
+
         # Look for Principled BSDF node
         for node in nodes:
             if node.type == 'BSDF_PRINCIPLED':
@@ -94,7 +102,7 @@ def modify_emission_strength(material, factor):
                     node.inputs['Emission Strength'].default_value = current_strength * factor
                     modified = True
                     print(f"Modified Principled BSDF emission in material: {material.name}")
-        
+
         # If no Principled BSDF emission was found, look for Emission shader nodes
         if not modified:
             for node in nodes:
@@ -105,7 +113,7 @@ def modify_emission_strength(material, factor):
                     node.inputs['Strength'].default_value = current_strength * factor
                     modified = True
                     print(f"Modified Emission node in material: {material.name}")
-        
+
         if not modified:
             print(f"No emission nodes found in material: {material.name}")
     else:
@@ -121,8 +129,8 @@ def multiply_material_emission_intensity(factor):
     print("\nEmission strength modification complete!")
 
 
-disable_decal_shadows()
-disable_decal_shadows_by_name()
+disable_shadows_by_material_property()
+disable_shadows_by_object_name("PaintCrack")
 set_empty_max_viewport_size(0.1)
 #multiply_material_emission_intensity(100)
 #multiply_light_intensity(1000)
