@@ -77,6 +77,20 @@ def set_empty_max_viewport_size(max_size):
         if obj.type == 'EMPTY':
             obj.empty_display_size = max_size
 
+import bpy
+
+def find_brightest_light():
+    brightest_light_object = None
+    max_power = -1.0
+
+    for obj in bpy.data.objects:
+        if obj.type == 'LIGHT':
+            light_data = obj.data
+            if light_data.energy > max_power:
+                max_power = light_data.energy
+                brightest_light_object = obj
+
+    return brightest_light_object
 
 
 def multiply_light_intensity(value):
@@ -132,7 +146,17 @@ def multiply_material_emission_intensity(factor):
 disable_shadows_by_material_property()
 disable_shadows_by_object_name("PaintCrack")
 set_empty_max_viewport_size(0.1)
-#multiply_material_emission_intensity(100)
-#multiply_light_intensity(1000)
 
 remove_lights_by_name()
+
+
+
+
+brightest_light = find_brightest_light()
+if brightest_light:
+    power_value = brightest_light.data.energy
+    if power_value < 30: # means light multiplication hasn't been run yet
+        multiply_material_emission_intensity(500)
+        multiply_light_intensity(500)
+    else:
+        print('Light intensity multiplication has already been done!')
