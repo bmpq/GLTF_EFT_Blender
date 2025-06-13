@@ -21,6 +21,13 @@ def disable_decal_shadows():
     print("shadows on decals disabled!")
 
 
+def disable_decal_shadows_by_name():
+    for obj in bpy.context.scene.objects:
+        if "PaintCrack" in obj.name:
+            obj.visible_shadow = False
+
+            print(f"Disabled shadows for object: {obj.name}")
+
 
 def set_empty_max_viewport_size(max_size):
     for obj in bpy.context.scene.objects:
@@ -80,6 +87,7 @@ def multiply_material_emission_intensity(factor):
 
 
 disable_decal_shadows()
+disable_decal_shadows_by_name()
 set_empty_max_viewport_size(0.1)
 #multiply_material_emission_intensity(100)
 #multiply_light_intensity(1000)
