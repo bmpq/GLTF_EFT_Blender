@@ -19,16 +19,13 @@ def disable_shadows_by_material_property(prop_name="disabledShadow"):
         if not obj.material_slots:
             continue
 
-        matching_material = next(
-            (
-                slot.material for slot in obj.material_slots
-                if slot.material and prop_name in slot.material
-            ),
-            None
+        all_materials_have_prop = all(
+            slot.material and prop_name in slot.material
+            for slot in obj.material_slots
         )
 
-        if matching_material:
-            reason = f"material: {matching_material.name}"
+        if all_materials_have_prop:
+            reason = f"all materials on {obj.name} have the '{prop_name}' property"
             _disable_shadows_for_object(obj, reason)
 
 
