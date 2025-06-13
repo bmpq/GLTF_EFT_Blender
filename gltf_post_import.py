@@ -31,6 +31,39 @@ def disable_decal_shadows_by_name():
             print(f"Disabled shadows for object: {obj.name}")
 
 
+import re
+def remove_lights_by_name():
+    print("-- Removing lights by name start --")
+
+    # The pattern for 'gi'. It looks for 'gi' followed by a specific boundary.
+    # r'' makes it a raw string, which is best practice for regex.
+    # (?=...) is a "positive lookahead", which checks what comes next without
+    # being part of the actual match.
+    # [\s\.\d_] matches a whitespace, a literal dot, a digit, or an underscore.
+    # |$ means OR the end of the string.
+    gi_pattern = r'gi(?=[\s\.\d_]|$)'
+
+    lights_to_remove = [
+        obj for obj in bpy.data.objects
+        if obj.type == 'LIGHT' and (
+            'ambient' in obj.name.lower() or
+            'volume' in obj.name.lower() or
+            re.search(gi_pattern, obj.name.lower())
+        )
+    ]
+
+    if not lights_to_remove:
+        print("No lights found to remove.")
+        print("-- Removing lights by name complete --")
+        return
+
+    for light in lights_to_remove:
+        print(f"- Removing: {light.name}")
+        bpy.data.objects.remove(light, do_unlink=True)
+
+    print("-- Removing lights by name complete --")
+
+
 def set_empty_max_viewport_size(max_size):
     for obj in bpy.context.scene.objects:
         if obj.type == 'EMPTY':
@@ -93,3 +126,5 @@ disable_decal_shadows_by_name()
 set_empty_max_viewport_size(0.1)
 #multiply_material_emission_intensity(100)
 #multiply_light_intensity(1000)
+
+remove_lights_by_name()
