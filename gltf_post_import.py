@@ -15,6 +15,7 @@ def disable_decal_shadows():
                         print(f"Found material '{mat.name}' on object '{obj.name}'. Disabling shadow for this object.")
                     
                         obj.visible_shadow = False
+                        obj.visible_diffuse = False
                         processed_objects.add(obj)
                         break 
 
@@ -25,6 +26,7 @@ def disable_decal_shadows_by_name():
     for obj in bpy.context.scene.objects:
         if "PaintCrack" in obj.name:
             obj.visible_shadow = False
+            obj.visible_diffuse = False
 
             print(f"Disabled shadows for object: {obj.name}")
 
