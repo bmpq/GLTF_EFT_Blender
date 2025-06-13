@@ -69,8 +69,8 @@ def load_cookie_textures():
             coord_node.location = (-600, 0)
             mapping_node.location = (-400, 0)
             image_tex_node.location = (-200, 0)
-            emission_node.location = (0, 0)
-            output_node.location = (200, 0)
+            emission_node.location = (100, 0)
+            output_node.location = (300, 0)
 
             # Load the found image into the image texture node
             image_tex_node.image = bpy.data.images.load(texture_filepath, check_existing=True)
@@ -78,7 +78,7 @@ def load_cookie_textures():
             # Link nodes: Normal output projects from the light's direction
             links.new(coord_node.outputs['Normal'], mapping_node.inputs['Vector'])
             links.new(mapping_node.outputs['Vector'], image_tex_node.inputs['Vector'])
-            links.new(image_tex_node.outputs['Color'], emission_node.inputs['Strength'])
+            links.new(image_tex_node.outputs['Alpha'], emission_node.inputs['Strength'])
             links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
             
             print(f"Successfully set up cookie texture for light '{obj.name}'")
