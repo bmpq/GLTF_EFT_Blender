@@ -94,9 +94,14 @@ def find_brightest_light():
 
 
 def multiply_light_intensity(value):
-    for obj in bpy.context.scene.objects:
+    modified = set()
+    for obj in bpy.data.objects:
         if obj.type == 'LIGHT':
+            if obj.data in modified:
+                continue
+
             obj.data.energy *= value
+            modified.add(obj.data)
 
 
 
