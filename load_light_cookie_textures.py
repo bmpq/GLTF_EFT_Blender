@@ -81,7 +81,6 @@ def load_cookie_textures():
             links.new(image_tex_node.outputs['Alpha'], emission_node.inputs['Strength'])
             links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
             
-            print(f"Successfully set up cookie texture for light '{obj.name}'")
             setup_count += 1
             
     if setup_count > 0:

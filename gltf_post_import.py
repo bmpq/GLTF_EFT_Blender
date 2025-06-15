@@ -73,8 +73,9 @@ def set_empty_max_viewport_size(max_size):
     for obj in bpy.context.scene.objects:
         if obj.type == 'EMPTY':
             obj.empty_display_size = max_size
+            
 
-import bpy
+
 
 def find_brightest_light():
     brightest_light_object = None
@@ -158,7 +159,37 @@ brightest_light = find_brightest_light()
 if brightest_light:
     power_value = brightest_light.data.energy
     if power_value < 30: # means light multiplication hasn't been run yet
-        multiply_material_emission_intensity(500)
-        multiply_light_intensity(500)
+        multiply_material_emission_intensity(50)
+        multiply_light_intensity(50)
     else:
         print('Light intensity multiplication has already been done!')
+        
+        
+        
+def delete_empty_objects_without_children():
+    bpy.ops.object.select_all(action='DESELECT')
+    
+    parents = set()
+    for obj in bpy.data.objects:
+        if obj.parent is not None:
+            parents.add(obj.parent)
+
+    empties_to_delete = []
+    for obj in bpy.data.objects:
+        if obj.type == 'EMPTY' and obj not in parents:
+            empties_to_delete.append(obj)
+
+    with bpy.context.temp_override():
+        for obj in empties_to_delete:
+            print(f"selecting {obj}")
+            obj.select_set(True)
+        print(f"BIG delete...")
+        bpy.ops.object.delete()
+        print(f"Iteration deleted {len(empties_to_delete)} objects!")
+        return len(empties_to_delete)
+
+limit = 16
+amount_deleted = 999
+while amount_deleted > 0 and limit > 0:
+    amount_deleted = delete_empty_objects_without_children()
+    limit -= 1
