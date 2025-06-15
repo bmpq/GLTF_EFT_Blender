@@ -77,18 +77,39 @@ def set_empty_max_viewport_size(max_size):
 
 
 
-def find_brightest_light():
-    brightest_light_object = None
-    max_power = -1.0
 
-    for obj in bpy.data.objects:
+def get_brightest_power():
+    brightest_object = None
+    max_strength = -1.0
+
+    for obj in bpy.context.scene.objects:
         if obj.type == 'LIGHT':
-            light_data = obj.data
-            if light_data.energy > max_power:
-                max_power = light_data.energy
-                brightest_light_object = obj
+            light_energy = obj.data.energy
+            if light_energy > max_strength:
+                max_strength = light_energy
+                brightest_object = obj
 
-    return brightest_light_object
+        elif obj.material_slots:
+            for mat_slot in obj.material_slots:
+                if mat_slot.material and mat_slot.material.use_nodes:
+                    mat = mat_slot.material
+                    for node in mat.node_tree.nodes:
+                        current_strength = 0.0
+                        
+                        if node.type == 'BSDF_PRINCIPLED':
+                            strength_input = node.inputs.get('Emission Strength')
+                            if strength_input:
+                                current_strength = strength_input.default_value
+                        elif node.type == 'EMISSION':
+                            strength_input = node.inputs.get('Strength')
+                            if strength_input:
+                                current_strength = strength_input.default_value
+
+                        if current_strength > max_strength:
+                            max_strength = current_strength
+                            brightest_object = obj
+                            
+    return max_strength
 
 
 def multiply_light_intensity(value):
@@ -152,17 +173,12 @@ set_empty_max_viewport_size(0.1)
 
 remove_lights_by_name()
 
-
-
-
-brightest_light = find_brightest_light()
-if brightest_light:
-    power_value = brightest_light.data.energy
-    if power_value < 30: # means light multiplication hasn't been run yet
-        multiply_material_emission_intensity(50)
-        multiply_light_intensity(50)
-    else:
-        print('Light intensity multiplication has already been done!')
+brightest_power = get_brightest_power()
+if brightest_power != -1 and brightest_power < 30: # means light multiplication hasn't been run yet
+    multiply_material_emission_intensity(50)
+    multiply_light_intensity(50)
+else:
+    print('Light intensity multiplication has already been done!')
         
         
         
