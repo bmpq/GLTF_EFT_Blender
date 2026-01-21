@@ -125,10 +125,26 @@ def process_materials():
                 if p_type in ['Float', 'Range', 'Int'] and p_val is not None:
                     socket.default_value = float(p_val)
                 elif p_type == 'Vector' and p_val is not None:
-                    if socket.type == 'VECTOR': socket.default_value = p_val[:4]
-                    else: socket.default_value = p_val
+                    socket.default_value = p_val
+
+                    if len(p_val) > 3:
+                        alpha_val = p_val[3]
+                        possible_alpha_names = [f"{prop_name}_A", f"{prop_name}_Alpha", f"{prop_name}_a"]
+                        for a_name in possible_alpha_names:
+                            if a_name in group_node.inputs:
+                                group_node.inputs[a_name].default_value = alpha_val
+                                break
+
                 elif p_type == 'Color' and p_val is not None:
                     socket.default_value = p_val
+                    
+                    if len(p_val) > 3:
+                        alpha_val = p_val[3]
+                        possible_alpha_names = [f"{prop_name}_A", f"{prop_name}_Alpha", f"{prop_name}_a"]
+                        for a_name in possible_alpha_names:
+                            if a_name in group_node.inputs:
+                                group_node.inputs[a_name].default_value = alpha_val
+                                break
 
             # Textures
             if p_type == 'TexEnv':
@@ -150,7 +166,7 @@ def process_materials():
                         except Exception as e:
                             print(f"  [Info] Could not set colorspace for {tex_name}: {e}")
                         
-                        # Handle Tiling/Offset (not sure if correct yet)
+                        # Handle Tiling/Offset
                         tiling = prop_data.get('tiling', [1.0, 1.0])
                         offset = prop_data.get('offset', [0.0, 0.0])
                         
