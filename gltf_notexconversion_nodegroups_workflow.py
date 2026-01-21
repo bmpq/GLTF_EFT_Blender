@@ -7,7 +7,7 @@ def get_image_by_name(image_name):
         return bpy.data.images[image_name]
     
     for img in bpy.data.images:
-        if img.name.startswith(image_name):
+        if img.name == image_name:
             return img
 
     blend_path = bpy.path.abspath("//")
@@ -76,7 +76,7 @@ def process_materials():
                 if p_type in ['Float', 'Range', 'Int'] and p_val is not None:
                     socket.default_value = float(p_val)
                 elif p_type == 'Vector' and p_val is not None:
-                    if socket.type == 'VECTOR': socket.default_value = p_val[:3]
+                    if socket.type == 'VECTOR': socket.default_value = p_val[:4]
                     else: socket.default_value = p_val
                 elif p_type == 'Color' and p_val is not None:
                     socket.default_value = p_val
