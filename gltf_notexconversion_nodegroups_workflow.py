@@ -1,6 +1,12 @@
 import bpy
 import os
 import ast
+import re
+
+def sanitize_name(name):
+    # Replace non-alphanumeric with _
+    clean = re.sub(r'[^a-zA-Z0-9]', '_', name)
+    return clean.lower()
 
 def get_image_by_name(image_name):
     if image_name in bpy.data.images:
@@ -8,6 +14,12 @@ def get_image_by_name(image_name):
     
     for img in bpy.data.images:
         if img.name == image_name:
+            return img
+    
+    # (In case the image is loaded as "matress_DM(2)" but requested as "matress_DM_2_")
+    target_sanitized = sanitize_name(image_name)
+    for img in bpy.data.images:
+        if sanitize_name(img.name) == target_sanitized:
             return img
 
     blend_path = bpy.path.abspath("//")
@@ -21,6 +33,35 @@ def get_image_by_name(image_name):
                 return bpy.data.images.load(filepath)
             except:
                 continue
+
+    # 5. FUZZY FILE SEARCH (The Fix)
+    # If we are here, exact file doesn't exist.
+    # We list all files in the directory, sanitize their names, and compare.
+    try:
+        if not os.path.exists(blend_path):
+            return None
+            
+        files_in_dir = os.listdir(blend_path)
+        
+        for f in files_in_dir:
+            f_name, f_ext = os.path.splitext(f)
+            
+            if f_ext.lower() not in extensions:
+                continue
+            
+            f_name_sanitized = sanitize_name(f_name)
+            
+            if f_name_sanitized == target_sanitized:
+                filepath = os.path.join(blend_path, f)
+                print(f"  [Fuzzy Match] Found '{f}' for requested '{image_name}'")
+                try:
+                    return bpy.data.images.load(filepath)
+                except:
+                    continue
+
+    except Exception as e:
+        print(f"  [Error] searching directory: {e}")
+
     return None
 
 def process_materials():
@@ -99,7 +140,7 @@ def process_materials():
                         
                         tex_node = nodes.new(type='ShaderNodeTexImage')
                         tex_node.image = image
-                        tex_node.location = (-400, group_node.location.y - (len(nodes)*40))
+                        tex_node.location = (-400, group_node.location.y - (len(nodes)*100))
                         
                         try:
                             if prop_name in srgb_slots:
@@ -129,11 +170,13 @@ def process_materials():
                             links.new(tex_node.outputs['Color'], group_node.inputs[prop_name])
                         
                         # Connect Alpha if a suffixed input exists in the group node
-                        possible_alpha_names = [f"{prop_name}_A", f"{prop_name}_Alpha", f"{prop_name}_a"]
+                        possible_alpha_names = [f"{prop_name}_A", f"{prop_name}_Alpha", f"{prop_name}_a", "Alpha", "A"]
                         
+                        found_alpha = False
                         for a_name in possible_alpha_names:
                             if a_name in group_node.inputs:
                                 links.new(tex_node.outputs['Alpha'], group_node.inputs[a_name])
+                                found_alpha = True
                                 break
                                 
                     else:
