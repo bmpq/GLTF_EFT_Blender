@@ -65,7 +65,8 @@ def get_image_by_name(image_name):
     return None
 
 def process_materials():
-    DEFAULT_SRGB_SLOTS = ['_MainTex', '_EmissionMap', '_Albedo', '_Aldebo', '_MainTex0', '_MainTex1', '_MainTex2']
+    DEFAULT_SRGB_SLOTS = ['_MainTex', '_EmissionMap', '_Albedo', '_Aldebo', '_MainTex0', '_MainTex1', '_MainTex2', 
+    '_BaseAlbedoASmoothness', '_TopAlbedoASmoothness']
     
     for mat in bpy.data.materials:
         if "shaderName" not in mat or "properties" not in mat:
