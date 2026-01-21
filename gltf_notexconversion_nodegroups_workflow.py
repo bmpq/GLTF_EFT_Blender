@@ -24,13 +24,21 @@ def get_image_by_name(image_name):
     return None
 
 def process_materials():
-    srgb_slots = ['_MainTex', '_EmissionMap']
+    DEFAULT_SRGB_SLOTS = ['_MainTex', '_EmissionMap', '_Albedo', '_Aldebo']
     
     for mat in bpy.data.materials:
         if "shaderName" not in mat or "properties" not in mat:
             continue
+        
+        srgb_slots = DEFAULT_SRGB_SLOTS.copy()
+        
+        shader_name = mat["shaderName"]
+
+        if shader_name == "MK4/Rock":
+            srgb_slots.append('_MaskRGBA')
+            srgb_slots.append('_Detail')
             
-        print(f"Reconstructing: {mat.name}")
+        print(f"Reconstructing: {mat.name} | Shader: {shader_name}")
         
         shader_name = mat["shaderName"]
         raw_properties = mat["properties"]
