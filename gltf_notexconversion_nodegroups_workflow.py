@@ -68,6 +68,15 @@ def process_materials():
     DEFAULT_SRGB_SLOTS = ['_MainTex', '_EmissionMap', '_Albedo', '_Aldebo', '_MainTex0', '_MainTex1', '_MainTex2', 
     '_BaseAlbedoASmoothness', '_TopAlbedoASmoothness']
     
+    # Map the SpeedTree keyword to a Float for the Node Group
+    SPEEDTREE_TYPE_MAP = {
+        "GEOM_TYPE_BRANCH": 0.0,
+        "GEOM_TYPE_BRANCH_DETAIL": 1.0,
+        "GEOM_TYPE_FROND": 2.0,
+        "GEOM_TYPE_LEAF": 3.0,
+        "GEOM_TYPE_MESH": 4.0
+    }
+    
     for mat in bpy.data.materials:
         if "shaderName" not in mat or "properties" not in mat:
             continue
@@ -115,6 +124,25 @@ def process_materials():
 
         if group_node.outputs:
             links.new(group_node.outputs[0], output_node.inputs['Surface'])
+
+        if shader_name == "Nature/SpeedTree":
+            geom_type_str = mat.get("speedTreeGeometryType")
+            
+            if geom_type_str and geom_type_str in SPEEDTREE_TYPE_MAP:
+                val = SPEEDTREE_TYPE_MAP[geom_type_str]
+                
+                target_inputs = ["GeometryType", "Geometry Type", "_GeometryType", "Type"]
+                
+                found_socket = False
+                for target in target_inputs:
+                    if target in group_node.inputs:
+                        group_node.inputs[target].default_value = val
+                        print(f"  [SpeedTree] Set '{target}' to {val} ({geom_type_str})")
+                        found_socket = True
+                        break
+                
+                if not found_socket:
+                    print(f"  [SpeedTree] Warning: Found type '{geom_type_str}' but Node Group has no 'GeometryType' input.")
 
         for prop_name, prop_data in properties.items():
             
