@@ -34,7 +34,7 @@ def get_image_by_name(image_name):
             except:
                 continue
 
-    # 5. FUZZY FILE SEARCH (The Fix)
+    # 5. FUZZY FILE SEARCH
     # If we are here, exact file doesn't exist.
     # We list all files in the directory, sanitize their names, and compare.
     try:
@@ -227,6 +227,70 @@ def process_materials():
                     else:
                         print(f"  [Missing Texture] {tex_name}")
 
-    print("Done.")
+    print("Materials processing complete.")
+
+def process_lights():
+    for obj in bpy.data.objects:
+        if obj.type != 'LIGHT' or not obj.data:
+            continue
+        
+        light = obj.data
+        cookie_name = None
+
+        # Check in both Object custom properties and Light data custom properties
+        for target in (obj, light):
+            for key in ("cookieTextureName", "cookieTexName", "cookie"):
+                if key in target:
+                    cookie_name = target[key]
+                    break
+            if cookie_name:
+                break
+
+        if not cookie_name:
+            continue
+
+        image = get_image_by_name(cookie_name)
+        if not image:
+            print(f"  [Missing Light Cookie Texture] {cookie_name}")
+            continue
+
+        image.alpha_mode = 'CHANNEL_PACKED'
+        try:
+            image.colorspace_settings.name = 'Non-Color'
+        except Exception as e:
+            print(f"  [Info] Could not set colorspace for {cookie_name}: {e}")
+
+        light.use_nodes = True
+        nodes = light.node_tree.nodes
+        links = light.node_tree.links
+
+        output_node = None
+        emission_node = None
+        for n in nodes:
+            if n.type == 'OUTPUT_LIGHT':
+                output_node = n
+            elif n.type == 'EMISSION':
+                emission_node = n
+
+        if not output_node:
+            output_node = nodes.new(type='ShaderNodeOutputLight')
+            output_node.location = (300, 0)
+
+        if not emission_node:
+            emission_node = nodes.new(type='ShaderNodeEmission')
+            emission_node.location = (0, 0)
+            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+
+        # Create Image Texture node for cookie
+        tex_node = nodes.new(type='ShaderNodeTexImage')
+        tex_node.image = image
+        tex_node.location = (-600, 0)
+
+        # Connect texture output to Emission node Color
+        links.new(tex_node.outputs['Alpha'], emission_node.inputs['Color'])
+        print(f"  [Success] Connected cookie '{cookie_name}' to light '{obj.name}'")
+
+    print("Lights processing complete.")
 
 process_materials()
+process_lights()
